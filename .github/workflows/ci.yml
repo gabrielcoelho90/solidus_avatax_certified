@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+
+jobs:
+  rubocop:
+    name: RuboCop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Run RuboCop
+        run: bundle exec rubocop --format github
+
+  brakeman:
+    name: Brakeman
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Run Brakeman
+        run: bundle exec brakeman --no-pager
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    env:
+      AVATAX_COMPANY_CODE: DEFAULT
+      AVATAX_LICENSE_KEY: '12345'
+      AVATAX_ACCOUNT: '12345'
+      AVATAX_ENVIRONMENT: sandbox
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Generate dummy app
+        run: bundle exec rake extension:test_app
+
+      - name: Run specs
+        run: bundle exec rake extension:specs
