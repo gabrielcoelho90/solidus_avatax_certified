@@ -4,11 +4,8 @@ module SolidusAvataxCertified
   module Spree
     module PaymentDecorator
       def self.prepended(base)
-        return if base.state_machine.callbacks[:after].any? do |c|
-          c.instance_variable_get(:@methods)&.include?(:avalara_finalize)
-        rescue StandardError
-          false
-        end
+        return if base.instance_variable_get(:@solidus_avatax_certified_payment_prepended)
+        base.instance_variable_set(:@solidus_avatax_certified_payment_prepended, true)
 
         base.state_machine.after_transition to: :completed, do: :avalara_finalize
         base.state_machine.after_transition to: :void, do: :cancel_avalara
