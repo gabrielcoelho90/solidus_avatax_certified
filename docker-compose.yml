@@ -1,0 +1,70 @@
+# Reproduces CI jobs locally:
+#
+#   specs-mysql  → solidus: v4.7, ruby: 3.2, db: mysql
+#   specs-sqlite → solidus: v4.7, ruby: 3.2, db: sqlite
+#
+# Usage:
+#   docker compose run --rm specs-mysql
+#   docker compose run --rm specs-sqlite
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: circle_test
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  specs-mysql:
+    image: ruby:3.2
+    working_dir: /app
+    volumes:
+      - .:/app
+      - bundle-mysql:/usr/local/bundle
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql2://root@mysql/circle_test?pool=5
+      DB: mysql
+      RAILS_ENV: test
+      SOLIDUS_BRANCH: v4.7
+      SKIP_SOLIDUS_BOLT: "1"
+      DATABASE_CLEANER_ALLOW_REMOTE_DATABASE_URL: "true"
+    command: >
+      bash -c "
+        apt-get update -qq &&
+        apt-get install -y default-mysql-client default-libmysqlclient-dev nodejs &&
+        bundle lock --update &&
+        bundle install &&
+        bundle exec rake
+      "
+
+  specs-sqlite:
+    image: ruby:3.2
+    working_dir: /app
+    volumes:
+      - .:/app
+      - bundle-sqlite:/usr/local/bundle
+    environment:
+      DB: sqlite3
+      RAILS_ENV: test
+      SOLIDUS_BRANCH: v4.7
+      SKIP_SOLIDUS_BOLT: "1"
+    command: >
+      bash -c "
+        apt-get update -qq &&
+        apt-get install -y libsqlite3-dev nodejs &&
+        bundle lock --update &&
+        bundle install &&
+        bundle exec rake
+      "
+
+volumes:
+  bundle-mysql:
+  bundle-sqlite:
