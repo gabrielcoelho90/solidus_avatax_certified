@@ -23,9 +23,9 @@ end
 gem 'rails', '>0.a'
 
 case ENV['DB']
-when 'postgresql'
+when 'postgresql', 'postgres'
   gem 'pg'
-when 'mysql'
+when 'mysql', 'mysql2'
   gem 'mysql2'
 else
   gem 'sqlite3'
