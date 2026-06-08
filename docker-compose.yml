@@ -1,8 +1,8 @@
 # Reproduces all three CircleCI jobs locally:
 #
-#   specs-postgres → solidus: current, ruby: 3.3, db: postgres
-#   specs-mysql    → solidus: current, ruby: 3.2, db: mysql
-#   specs-sqlite   → solidus: current, ruby: 3.2, db: sqlite
+#   specs-postgres → solidus: v4.7, ruby: 3.3, db: postgres
+#   specs-mysql    → solidus: v4.7, ruby: 3.2, db: mysql
+#   specs-sqlite   → solidus: v4.7, ruby: 3.2, db: sqlite
 #
 # Usage:
 #   docker compose run --rm specs-postgres
