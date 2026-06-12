@@ -19,7 +19,7 @@ module SolidusAvataxCertified
       protected
 
       def base_tax_hash
-        {
+        hash = {
           customerCode: customer_code,
           companyCode: company_code,
           customerUsageType: order.customer_usage_type,
@@ -28,6 +28,8 @@ module SolidusAvataxCertified
           currencyCode: order.currency,
           businessIdentificationNo: business_id_no
         }
+        hash[:reportingLocationCode] = reporting_location_code if reporting_location_code
+        hash
       end
 
       def address_lines
@@ -54,6 +56,10 @@ module SolidusAvataxCertified
 
       def customer_code
         order.user ? order.user.id : order.email
+      end
+
+      def reporting_location_code
+        order.stock_locations.first&.code.presence
       end
     end
   end
