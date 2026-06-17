@@ -19,5 +19,41 @@ RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
     it 'has ReferenceCode from base_tax_hash' do
       expect(subject.generate[:createTransactionModel][:referenceCode]).to eq(order.number)
     end
+
+    context 'when order has a manual discount adjustment' do
+      before do
+        Spree::Adjustment.create!(
+          order: order,
+          adjustable: order,
+          amount: -5.0,
+          label: 'Coupon Code',
+          eligible: true
+        )
+      end
+
+      it 'aggregates the discount into the header-level discount field' do
+        result = subject.generate[:createTransactionModel]
+        expect(result[:discount]).to eq('5.0')
+      end
+
+      it 'does not include a separate line item for the adjustment' do
+        lines = subject.generate[:createTransactionModel][:lines]
+        expect(lines.none? { |l| l[:number].to_s.include?('ADJ') }).to be true
+      end
+
+      # DOC-24: desired behavior after fix
+      it 'does not include a header-level discount field' do
+        result = subject.generate[:createTransactionModel]
+        expect(result).not_to have_key(:discount)
+      end
+
+      it 'includes the adjustment as a separate negative-amount line item' do
+        lines = subject.generate[:createTransactionModel][:lines]
+        adj_line = lines.find { |l| l[:number].to_s.include?('ADJ') }
+        expect(adj_line).to be_present
+        expect(adj_line[:amount]).to eq(-5.0)
+        expect(adj_line[:description]).to eq('Coupon Code')
+      end
+    end
   end
 end
