@@ -20,6 +20,7 @@ module SolidusAvataxCertified
       else
         item_lines_array
         shipment_lines_array
+        adjustment_lines_array
       end
     end
 
@@ -44,6 +45,27 @@ module SolidusAvataxCertified
       order.line_items.each do |line_item|
         lines << item_line(line_item)
       end
+    end
+
+    def adjustment_lines_array
+      order.all_adjustments.eligible.where('amount < 0').each do |adjustment|
+        lines << adjustment_line(adjustment)
+      end
+    end
+
+    def adjustment_line(adjustment)
+      {
+        number: "#{adjustment.id}-ADJ",
+        description: adjustment.label,
+        quantity: 1,
+        amount: adjustment.amount.to_f,
+        taxCode: '',
+        itemCode: 'DISCOUNT',
+        addresses: {
+          shipFrom: default_ship_from,
+          shipTo: ship_to
+        }
+      }.merge(base_line_hash)
     end
 
     def shipment_lines_array
