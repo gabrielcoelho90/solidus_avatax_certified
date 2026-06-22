@@ -31,17 +31,6 @@ RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
         )
       end
 
-      it 'aggregates the discount into the header-level discount field' do
-        result = subject.generate[:createTransactionModel]
-        expect(result[:discount]).to eq('5.0')
-      end
-
-      it 'does not include a separate line item for the adjustment' do
-        lines = subject.generate[:createTransactionModel][:lines]
-        expect(lines.none? { |l| l[:number].to_s.include?('ADJ') }).to be true
-      end
-
-      # DOC-24: desired behavior after fix
       it 'does not include a header-level discount field' do
         result = subject.generate[:createTransactionModel]
         expect(result).not_to have_key(:discount)
