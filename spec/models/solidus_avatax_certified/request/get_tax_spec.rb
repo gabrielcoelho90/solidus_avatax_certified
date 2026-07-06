@@ -20,6 +20,13 @@ RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
       expect(subject.generate[:createTransactionModel][:referenceCode]).to eq(order.number)
     end
 
+    context 'point of order origin (bill-to address)' do
+      it 'sends the order bill address as addresses[:pointOfOrderOrigin] at the header level' do
+        result = subject.generate[:createTransactionModel]
+        expect(result[:addresses][:pointOfOrderOrigin]).to eq(order.bill_address.to_avatax_hash)
+      end
+    end
+
     context 'when order has a manual discount adjustment' do
       before do
         Spree::Adjustment.create!(

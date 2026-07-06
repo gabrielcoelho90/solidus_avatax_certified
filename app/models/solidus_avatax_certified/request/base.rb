@@ -29,6 +29,7 @@ module SolidusAvataxCertified
           businessIdentificationNo: business_id_no
         }
         hash[:reportingLocationCode] = reporting_location_code if reporting_location_code
+        hash[:addresses] = { pointOfOrderOrigin: order.bill_address.to_avatax_hash } if order.bill_address
         hash
       end
 
