@@ -27,6 +27,26 @@ RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
       end
     end
 
+    context 'header-level destination and origin addresses' do
+      it 'sends the order ship address as addresses[:shipTo]' do
+        result = subject.generate[:createTransactionModel]
+        expect(result[:addresses][:shipTo]).to eq(order.ship_address.to_avatax_hash)
+      end
+
+      it 'sends the configured store origin as addresses[:shipFrom]' do
+        result = subject.generate[:createTransactionModel]
+        origin = JSON.parse(Spree::Avatax::Config.origin)
+        expect(result[:addresses][:shipFrom]).to eq(
+          line1: origin['line1'],
+          line2: origin['line2'],
+          city: origin['city'],
+          region: origin['region'],
+          country: origin['country'],
+          postalCode: origin['postalCode']
+        )
+      end
+    end
+
     context 'when order has a manual discount adjustment' do
       before do
         Spree::Adjustment.create!(
