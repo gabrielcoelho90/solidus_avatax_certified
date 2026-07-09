@@ -16,8 +16,8 @@ window.show_flash = function(type, message) {
     if (!flashWrapper) {
       flashWrapper = document.createElement('div');
       flashWrapper.className = 'js-flash-wrapper';
-      if (addressValidator) {
-        addressValidator.parentNode.insertBefore(flashWrapper, addressValidator);
+      if (addressValidator && addressValidator.parentNode) {
+        addressValidator.parentNode.after(flashWrapper);
       } else {
         document.body.prepend(flashWrapper);
       }
