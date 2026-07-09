@@ -17,6 +17,10 @@ var AddressValidator;
   }
 
   AddressValidator = class AddressValidator {
+    constructor(url) {
+      this.url = url || pathFor('checkout/validate_ship_address');
+    }
+
     validate() {
       var address = this.formatAddress();
       var params = new URLSearchParams();
@@ -25,7 +29,7 @@ var AddressValidator;
         params.append('address[' + entry[0] + ']', entry[1] || '');
       });
 
-      fetch(pathFor('checkout/validate_address') + '?' + params, {
+      fetch(this.url + '?' + params, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       })
@@ -35,14 +39,22 @@ var AddressValidator;
           this.showFlash(data);
           return;
         }
-        var validatedAddress = data.validatedAddresses[0];
+        var validatedAddresses = data.validatedAddresses;
+        if (!validatedAddresses || !validatedAddresses[0]) {
+          this.showFlash({ responseCode: 'error', errorMessages: ['Address could not be validated'] });
+          return;
+        }
+        var validatedAddress = validatedAddresses[0];
         var wrapper = this.addressWrapper();
         ['address1', 'address2', 'city', 'zipcode'].forEach(function(field) {
           var input = document.querySelector(wrapper + ' input[id*="' + field + '"]');
           if (input) input.value = validatedAddress[lineHash[field]] || '';
         });
         this.showFlash(data);
-      }.bind(this));
+      }.bind(this))
+      .catch(function() {
+        window.show_flash && window.show_flash('error', 'Address validation request failed');
+      });
     }
 
     formatAddress() {
@@ -81,7 +93,8 @@ var AddressValidator;
     document.querySelectorAll('.address_validator').forEach(function(el) {
       el.addEventListener('click', function(e) {
         e.preventDefault();
-        new AddressValidator().validate();
+        var url = el.getAttribute('href') && el.getAttribute('href') !== '#' ? el.getAttribute('href') : null;
+        new AddressValidator(url).validate();
       });
     });
   });
