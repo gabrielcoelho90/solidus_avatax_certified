@@ -112,6 +112,31 @@ module SolidusAvataxCertified
 
         lines << return_item_line(inv_unit.first.line_item, quantity, amount)
       end
+
+      return_shipment_lines(inventory_units)
+    end
+
+    def return_shipment_lines(inventory_units)
+      inventory_units.map(&:shipment).uniq.compact.each do |shipment|
+        next unless shipment.tax_category
+
+        lines << return_shipment_line(shipment)
+      end
+    end
+
+    def return_shipment_line(shipment)
+      {
+        number: "#{shipment.id}-FR",
+        itemCode: truncateLine(shipment.shipping_method.name),
+        quantity: 1,
+        amount: -shipment.total_before_tax.to_f,
+        description: 'Shipping Charge',
+        taxCode: shipment.shipping_method_tax_code,
+        addresses: {
+          shipFrom: shipment.stock_location.to_avatax_hash,
+          shipTo: ship_to
+        }
+      }.merge(base_line_hash)
     end
 
     def refund_line
