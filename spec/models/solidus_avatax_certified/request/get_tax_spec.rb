@@ -47,7 +47,7 @@ RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
       end
     end
 
-    context 'when order has a manual discount adjustment' do
+    context 'when order has a manual (order-level) discount adjustment' do
       before do
         Spree::Adjustment.create!(
           order: order,
@@ -56,6 +56,7 @@ RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
           label: 'Coupon Code',
           eligible: true
         )
+        order.reload
       end
 
       it 'does not include a header-level discount field' do
@@ -63,12 +64,13 @@ RSpec.describe SolidusAvataxCertified::Request::GetTax, :vcr do
         expect(result).not_to have_key(:discount)
       end
 
-      it 'includes the adjustment as a separate negative-amount line item' do
+      it 'nets the discount into the item lines instead of a separate line item' do
         lines = subject.generate[:createTransactionModel][:lines]
-        adj_line = lines.find { |l| l[:number].to_s.include?('ADJ') }
-        expect(adj_line).to be_present
-        expect(adj_line[:amount]).to eq(-5.0)
-        expect(adj_line[:description]).to eq('Coupon Code')
+        expect(lines.any? { |l| l[:number].to_s.include?('ADJ') }).to be false
+
+        item_lines = lines.select { |l| l[:number].to_s.end_with?('-LI') }
+        # $5 distributed across two equal $10 lines => $7.50 net per line
+        expect(item_lines.map { |l| l[:amount] }).to all(eq(7.5))
       end
     end
   end
