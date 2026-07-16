@@ -16,3 +16,8 @@ log/*
 .bundle
 spec/examples.txt
 .env
+
+# Internal working files — kept local, never published
+/docs/
+/CLAUDE.md
+/.claude/
